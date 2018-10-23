@@ -37,11 +37,20 @@ def format_health_data(xml_file):
     df['endDate'] =  pd.to_datetime(df['endDate'])-pd.Timedelta(hours=4)
     df['interval_seconds'] = (df['endDate'] - df['startDate']).astype('timedelta64[s]')
     df['interval_minutes'] = (df['interval_seconds'])/60
-
     df['value']= df['value'].astype('float')
-
     df['pace'] = df['value']/df['interval_minutes']
     df['day'] = (df['startDate']).dt.date
     return df
 
+def get_running_distance(df, days_ago):
+    run = df
+    run = df[['pace', 'creationDate', 'value', 'day']][df['type'] == 'HKQuantityTypeIdentifierDistanceWalkingRunning']
+    start_date_ago = datetime.datetime.now() + datetime.timedelta(-days_ago)
+    prev_ = run.loc[run['day'] > start_date_ago.date()]
+    prev_sum = prev_.groupby(['day'])['value'].sum()
+    return prev_sum
+
 df = format_health_data('export.xml')
+
+run_df = get_running_distance(df,90)
+
